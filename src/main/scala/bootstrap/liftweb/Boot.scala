@@ -5,7 +5,16 @@ import net.liftweb.http.LiftRules
 import net.liftweb.http.LiftRulesMocker.toLiftRules
 import net.liftweb.sitemap._
 import net.liftweb.sitemap.Loc._
+import net.liftweb.util.DefaultConnectionIdentifier
 import net.liftmodules.JQueryModule
+import net.liftweb.sitemap.{* => *}
+import net.liftweb.sitemap.Loc._
+import net.liftweb.sitemap.Loc._
+import net.liftweb.sitemap.LocPath.stringToLocPath
+import net.liftweb.sitemap.Menu
+import net.liftweb.sitemap.SiteMap
+
+import code.model.M
 
 /**
  * A class that's instantiated early and run.  It allows the application
@@ -14,13 +23,13 @@ import net.liftmodules.JQueryModule
 class Boot {
 
   def boot {
-
     LiftRules.addToPackages("code")
 
     // Build SiteMap
     def sitemap = SiteMap(
       Menu.i("Home") / "index", // the simple way to declare a menu
 
+      Menu.param[M]("M", "M", s ⇒ Full(M(s)), m => m.id) / "m" / *,
       // more complex because this menu allows anything in the
       // /static path to be visible
       Menu(Loc("Static", Link(List("static"), true, "/static/index"),
