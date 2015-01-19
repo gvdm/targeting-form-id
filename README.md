@@ -1,4 +1,4 @@
-# Targeting a AJAX enabled
+# Targeting an AJAX enabled form
 
 Specifically I need a way to add an event handler to a specific form from a specific comet. There several forms on the page each to their own comet.
 
