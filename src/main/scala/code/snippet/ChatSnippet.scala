@@ -15,7 +15,7 @@ class ChatSnippet(m: M) extends Loggable {
     "div" #> <div id="open-chat-rooms"><div id="stream-chat">{ ChatBox(m.id) }</div></div>
              <div data-lift={ "comet?type=ChatControls;name=" + StringHelpers.randomString(8) }>
                <ul id="chat-list"><li class="chat-room"></li></ul>
-               <form id="create-chat-room" class="lift:form.ajax">
+               <form id="create-chat-room" data-lift="form.ajax">
                  Make a chat room:
                  <input type="text" id="chat-name">Name</input>
                  <button type="button" id="make-chat-room">Create the chat room</button>
@@ -28,7 +28,7 @@ object ChatBox {
     <div class="chat-box" data-lift={ "comet?type=ChatUser;name=" + id }>
       Now chatting on { id }
       <div class="messages"></div>
-      <form class="lift:form.ajax">
+      <form data-lift="form.ajax?class=chat-message-form">
         <input type="text" name="message"/>
         <input type="submit" name="send-message"/>
       </form>

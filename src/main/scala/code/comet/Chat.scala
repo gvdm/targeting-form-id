@@ -15,6 +15,10 @@ import code.model.ChatRoom
 import code.snippet.ChatBox
 import org.joda.time.format.DateTimeFormatter
 import org.joda.time.format.DateTimeFormat
+import net.liftweb.http.js.JE.AnonFunc
+import net.liftweb.http.js.jquery.JqJE.Jq
+import net.liftweb.http.js.JE.JsFunc
+import net.liftweb.http.js.JE.JsVar
 
 case class NewChatRoom(cr: ChatRoom)
 case class ChatMessage(message: String, timestamp: DateTime)
@@ -52,23 +56,21 @@ class ChatUser extends CometActor with CometListener with Loggable {
     }
     super.localSetup()
 
-    logger.info("localSetup for "+htmlIdName)
+    logger.info("localSetup for "+name)
   }
 
   override def lowPriority = {
     case msg: ChatMessage ⇒ {
-      logger.info("got chat msg of"+msg.message+" in "+htmlIdName)
+      logger.info("got chat msg of"+msg.message+" in "+name)
       messages ::= msg
-      partialUpdate(AppendHtml(htmlIdName()+"-message-list", renderMessage(msg)))
+      partialUpdate(AppendHtml(uniqueId+"-message-list", renderMessage(msg)))
     }
     
     case msgs: List[ChatMessage] ⇒ {
       messages = msgs
-      partialUpdate(SetHtml(htmlIdName()+"-message-list", renderMessages()))
+      partialUpdate(SetHtml(uniqueId+"-message-list", renderMessages()))
     }
   }
-  
-  def htmlIdName() = name.getOrElse("ERROR_CHATUSER_SHOULD_HAVE_NAME")
   
   def renderMessages() = messages.reverse.map(renderMessage(_))
 
@@ -82,14 +84,19 @@ class ChatUser extends CometActor with CometListener with Loggable {
   
   def render = {
     var message = ""
-    
-    ".messages *" #> <ul id={ htmlIdName() + "-message-list" }> { renderMessages() } </ul> &
-    "@message" #> SHtml.text(message, str ⇒ message = str, "id" -> (htmlIdName() + "-message-input")) &
+    // README: the below Jq(".chat-message-form :submit") needs to target a this specific form for this comet
+    // this also actually overrides the ajax submit so I don't get the chat message submitted to the server 
+    //S.appendJs((Jq(".chat-message-form :submit") ~> JsFunc("on", "click", AnonFunc("event", (JsVar("event") ~> JsFunc("preventDefault")).cmd & SetValueAndFocus(uniqueId+"-message-input", "")))).cmd)
+    ".chat-message-form [id]" #> (uniqueId + "-chat-message-form") & // README: This does not apply an id to the form (can't modify/override lifts GUID?) 
+    ".messages *" #> <ul id={ uniqueId + "-message-list" }> { renderMessages() } </ul> &
+    "@message" #> SHtml.text(message, str ⇒ message = str, "id" -> (uniqueId + "-message-input")) &
     "@send-message" #> SHtml.ajaxSubmit("Send", () ⇒ {
       if (message.nonEmpty) {
         _chatServer ! ChatMessage(message, DateTime.now)
       }
-      SetValueAndFocus(htmlIdName() + "-message-input", "")
+      // the below is here because it's the only way that I can get the effect there should be so far
+      // SetValueAndFocus(uniqueId + "-message-input", "") & // README: should be executed before ajax call is made on submit
+      Noop 
     })
   }
 }
